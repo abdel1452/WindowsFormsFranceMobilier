@@ -25,13 +25,13 @@ namespace WindowsFormsFranceMobilier
             try
             {
                 bool connecte = false;
-                
+                int empId = 0;
 
                 // 🔑 Récupérer les identifiants depuis le .env
-                string host = Environment.GetEnvironmentVariable("DB_HOST");
-                string db = Environment.GetEnvironmentVariable("DB_NAME");   
-                string user = Environment.GetEnvironmentVariable("DB_USER");
-                string pass = Environment.GetEnvironmentVariable("DB_PASS"); 
+                string host = Environment.GetEnvironmentVariable("DB_HOST"); // ex: "."
+                string db = Environment.GetEnvironmentVariable("DB_NAME");   // ex: "FranceMobilier"
+                string user = Environment.GetEnvironmentVariable("DB_USER"); // ex: "fm_login"
+                string pass = Environment.GetEnvironmentVariable("DB_PASS"); // ex: "toto"
 
                 // 🔌 Chaîne de connexion initiale
                 string connectionString = $"Server={host};Database={db};User Id={user};Password={pass};";
