@@ -24,61 +24,58 @@ namespace WindowsFormsFranceMobilier
         {
             try
             {
-                // 🔑 Récupérer les identifiants depuis le .env
-                string host = Environment.GetEnvironmentVariable("DB_HOST"); // .
-                string db = Environment.GetEnvironmentVariable("DB_NAME"); // FranceMobilier
-                string user = Environment.GetEnvironmentVariable("DB_USER"); // sa
-                string pass = Environment.GetEnvironmentVariable("DB_PASS"); // toto
+                bool connecte = false;
 
-                // 🔌 Construire la chaîne de connexion
+                // 🔑 Récupérer les identifiants depuis le .env
+                string host = Environment.GetEnvironmentVariable("DB_HOST");
+                string db = Environment.GetEnvironmentVariable("DB_NAME");
+                string user = Environment.GetEnvironmentVariable("DB_USER");
+                string pass = Environment.GetEnvironmentVariable("DB_PASS");
+
+                // 🔌 Chaîne de connexion pour login initial
                 string connectionString = $"Server={host};Database={db};User Id={user};Password={pass};";
 
-                using (SqlConnection conn = new SqlConnection(connectionString))
+                Program.maConnexion = ConnexionBdd.GetDBConnection(connectionString);
+                Program.maConnexion.Open();
+
+                string req = "SELECT * FROM employe";
+                SqlCommand command = new SqlCommand(req, Program.maConnexion);
+                SqlDataReader reader = command.ExecuteReader();
+
+                while (reader.Read())
                 {
-                    conn.Open(); // Tester la connexion
+                    string login = reader.GetString(reader.GetOrdinal("emp_login"));
+                    string mdp = reader.GetString(reader.GetOrdinal("emp_password"));
+                    int id = reader.GetInt32(reader.GetOrdinal("emp_id"));
 
-                    // Exemple de requête simple pour vérifier les utilisateurs
-                    string req = "SELECT emp_id, emp_login, emp_password FROM employe";
-                    SqlCommand command = new SqlCommand(req, conn);
-                    SqlDataReader reader = command.ExecuteReader();
-
-                    bool connecte = false;
-                    int empId = 0;
-
-                    while (reader.Read())
+                    if (tbLogin.Text == login && PasswordHelper.VerifyPassword(tbPassword.Text, mdp))
                     {
-                        string login = reader.GetString(reader.GetOrdinal("emp_login"));
-                        string mdp = reader.GetString(reader.GetOrdinal("emp_password"));
-                        int id = reader.GetInt32(reader.GetOrdinal("emp_id"));
-
-                        // Ici tu peux remplacer par PasswordHelper.VerifyPassword si tu l’as
-                        if (tbLogin.Text == login && tbPassword.Text == mdp)
-                        {
-                            connecte = true;
-                            empId = id;
-                            break;
-                        }
+                        connecte = true;
+                        Program.employe = new Modele_Employe().GetEmploye(id);
+                        break;
                     }
+                }
 
-                    reader.Close();
+                reader.Close();
 
-                    if (!connecte)
-                    {
-                        tbPassword.Clear();
-                        MessageBox.Show("Identifiant ou mot de passe incorrect.", "Erreur", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                    }
-                    else
-                    {
-                        MessageBox.Show("Connexion réussie !", "OK", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                if (!connecte)
+                {
+                    tbPassword.Clear();
+                    MessageBox.Show("Identifiant ou mot de passe incorrect.", "Erreur", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+                else
+                {
+                    // Connexion avec rôle de l'employé
+                    Program.maConnexion.Close();
+                    string roleUser = Program.employe.GetFonction();
+                    string roleConnectionString = $"Server={host};Database={db};User Id={roleUser};Password={pass};";
+                    Program.maConnexion = ConnexionBdd.GetDBConnection(roleConnectionString);
+                    Program.maConnexion.Open();
 
-                        // Ici tu peux charger l'objet Employe et ouvrir le menu
-                        // Exemple minimal :
-                        // Program.employe = new Employe(empId, tbLogin.Text);
-                        // Fm_Menu menu = new Fm_Menu();
-                        // flagQuitter = false;
-                        // menu.Show();
-                        // Close();
-                    }
+                    Fm_Menu menu = new Fm_Menu();
+                    flagQuitter = false;
+                    menu.Show();
+                    Close();
                 }
             }
             catch (Exception ex)
@@ -97,6 +94,5 @@ namespace WindowsFormsFranceMobilier
         {
             // vide pour l'instant
         }
-
     }
 }
